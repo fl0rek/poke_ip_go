@@ -29,7 +29,7 @@ impl From<PokemonSeed> for PokemonId {
         let index = POKE_WEIGHTED_INDEX.sample(&mut rng);
         let pid: PokemonId = POKE_DROP_RATES[index].0;
 
-        log::info!("rolled pokemon: {pid:#?}");
+        log::info!("rolled pokemon: {pid:?}");
         pid
     }
 }

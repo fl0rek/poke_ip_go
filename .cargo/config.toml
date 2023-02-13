@@ -1,0 +1,81 @@
+[build]
+#target = 'x86_64-pc-windows-msvc'
+
+[target.aarch64-linux-android]
+ar = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar'
+linker = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang'
+rustflags = [
+    '-Clink-arg=-landroid',
+    '-Clink-arg=-llog',
+    '-Clink-arg=-lOpenSLES',
+    #'--target-dir target/android'
+]
+
+[target.armv7-linux-androideabi]
+ar = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/arm-linux-androideabi-ar'
+linker = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi24-clang'
+rustflags = [
+    '-Clink-arg=-landroid',
+    '-Clink-arg=-llog',
+    '-Clink-arg=-lOpenSLES',
+    #'--target-dir target/android'
+]
+
+[target.i686-linux-android]
+ar = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android-ar'
+linker = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android24-clang'
+rustflags = [
+    '-Clink-arg=-landroid',
+    '-Clink-arg=-llog',
+    '-Clink-arg=-lOpenSLES',
+    #'--target-dir target/android'
+]
+
+[target.x86_64-linux-android]
+ar = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android-ar'
+linker = 'deps/android-ndk-r22b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android24-clang'
+rustflags = [
+    '-Clink-arg=-landroid',
+    '-Clink-arg=-llog',
+    '-Clink-arg=-lOpenSLES',
+    #'--target-dir target/android'
+]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    #'--target-dir target/desktop'
+]
+
+[target.wasm32-unknown-unknown]
+rustflags = [
+    #'--target-dir target/wasm'
+]
+
+[env]
+RUST_LOG = "info"
+NDK_HOME = "deps/android-ndk-r22b"
+ANDROID_SDK_ROOT = "deps/cmdline-tools"
+#CARGO_TARGET_X86_68-PC-WINDOWS-MCVC_RUSTFLAGS = "--target-dir v2target/desktop"
+
+#[env.x86_64-pc-windows-msvc]
+#CARGO_TARGET_DIR="v2_target-desktop"
+
+#[env.aarch64-linux-android]
+#CARGO_TARGET_DIR="v2_target-mobile"
+
+#[env.armv7-linux-androideabi]
+#CARGO_TARGET_DIR="v2_target-mobile"
+
+#[env.i686-linux-android]
+#CARGO_TARGET_DIR="v2_target-mobile"
+
+#[env.x86_64-linux-android]
+#CARGO_TARGET_DIR="v2_target-mobile"
+
+#[env.wasm32-unknown-unknown]
+#CARGO_TARGET_DIR="v2_target-web"
+
+[alias]
+run-desktop = "run --bin poke_ip_go --target x86_64-pc-windows-msvc"
+run-webserver = "trunk serve --address 0.0.0.0"
+build-mobile = "android build"

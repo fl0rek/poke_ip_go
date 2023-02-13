@@ -1,0 +1,5 @@
+[app]
+name = "poke-ip-go"
+stylized-name = "Poke Ip Go"
+domain = "ipgo.florkiewicz.me"
+template-pack = "winit"

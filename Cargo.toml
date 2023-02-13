@@ -1,35 +1,50 @@
 [package]
-name = "alti-gui-wifi"
-version = "0.1.0"
+name = "poke-ip-go"
+version = "0.3.0"
 edition = "2021"
 default-run = "poke_ip_go"
+authors = ["florek <watashi@example.com>"]
 
 [lib]
 name = "app"
 path = "src/lib.rs"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "poke-ip-go-mobile"
+path = "gen/bin/desktop.rs"
 
 [[bin]]
 name = "poke_ip_go"
 path = "src/bin/app.rs"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 #[[bin]]
-#name = "PokeIpWeb"
-#path = "src/main.rs" # we're using trunk, which uses main.rs only
+#name = "PathIpWeb"
+#path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.52"
-pretty_env_logger = "0.4.0"
-dioxus = { version = "0.3.1" }
-futures-channel = "0.3.19"
+dioxus = { version = "0.3.1"}
 futures = "0.3.19"
+futures-channel = "0.3.19"
 serde_json = "1"
 serde = "1"
 rand = {version = "0.8", features = ["small_rng", "alloc", "getrandom"], default-features = false}
 lazy_static = "1.4"
 bytemuck = "1.13"
-getrandom = { version = "0.2.8", features = ["js"]}
+getrandom = {version = "0.2.8", features = ["js"]}
 log = "0.4"
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.9.0"
+log = "0.4.11"
+ndk-glue = "0.2.1"
+mobile-entry-point = "0.1.0"
+winit = "0.23.0"
+openssl = { version = "0.10", features = ["vendored"]}
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+pretty_env_logger = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 dioxus-web = "0.3.0"
@@ -40,9 +55,9 @@ web-sys = "0.3"
 instant = { version = "0.1", features = ["wasm-bindgen"]}
 wasm-cookies = "0.2"
 
-[target.'cfg(windows)'.dependencies] # TODO: and linux
-tokio = { version = "1.25", features = ["full"] }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.25", features = ["full"]}
 dioxus-desktop = "0.3.0"
 rustemon = "3.1"
 reqwest = { version = "0.11", features = ["json"]}
-instant = { version = "0.1" }
+instant = {version = "0.1"}
