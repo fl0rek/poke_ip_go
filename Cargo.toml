@@ -2,34 +2,47 @@
 name = "alti-gui-wifi"
 version = "0.1.0"
 edition = "2021"
+default-run = "poke_ip_go"
 
 [lib]
 name = "app"
 path = "src/lib.rs"
 
 [[bin]]
-name = "PokeIpGo"
+name = "poke_ip_go"
 path = "src/bin/app.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[web]]
-name = "PokeIpWeb"
-path = "src/main.rs" # we're using trunk, which uses main.rs only
+#[[bin]]
+#name = "PokeIpWeb"
+#path = "src/main.rs" # we're using trunk, which uses main.rs only
 
 [dependencies]
 anyhow = "1.0.52"
 pretty_env_logger = "0.4.0"
-tokio = { version = "1.25", features = ["full"] }
 dioxus = { version = "0.3.1" }
-dioxus-desktop = "0.3.0"
-wifiscanner = "0.5.1"
 futures-channel = "0.3.19"
 futures = "0.3.19"
-reqwest = { version = "0.11", features = ["json"]}
 serde_json = "1"
 serde = "1"
-rand = "0.8"
-rustemon = "3.1"
+rand = {version = "0.8", features = ["small_rng", "alloc", "getrandom"], default-features = false}
 lazy_static = "1.4"
 bytemuck = "1.13"
-rand_chacha = "0.3.1"
+getrandom = { version = "0.2.8", features = ["js"]}
+log = "0.4"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+dioxus-web = "0.3.0"
+wasm_request = "0.1"
+serde-wasm-bindgen = "0.4"
+console_log = "0.2.0"
+web-sys = "0.3"
+instant = { version = "0.1", features = ["wasm-bindgen"]}
+wasm-cookies = "0.2"
+
+[target.'cfg(windows)'.dependencies] # TODO: and linux
+tokio = { version = "1.25", features = ["full"] }
+dioxus-desktop = "0.3.0"
+rustemon = "3.1"
+reqwest = { version = "0.11", features = ["json"]}
+instant = { version = "0.1" }

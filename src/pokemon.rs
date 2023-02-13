@@ -1,13 +1,15 @@
-use crate::ip::Ip;
+use crate::ip::{Ip, IpSource};
+use crate::poke_api;
 use dioxus::prelude::*;
 use lazy_static::lazy_static;
 use rand::{
     distributions::{Distribution, WeightedIndex},
     SeedableRng,
 };
-use rustemon::{client::RustemonClient, model::pokemon::PokemonSprites};
+use serde::{Deserialize, Serialize};
+use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PokemonId(u32);
 
 impl PokemonId {
@@ -20,29 +22,85 @@ impl PokemonId {
     }
 }
 
+impl From<PokemonSeed> for PokemonId {
+    fn from(value: PokemonSeed) -> Self {
+        let pokeseed = value.seed();
+        let mut rng = rand::rngs::SmallRng::seed_from_u64(pokeseed);
+        let index = POKE_WEIGHTED_INDEX.sample(&mut rng);
+        let pid: PokemonId = POKE_DROP_RATES[index].0;
+
+        log::info!("rolled pokemon: {pid:#?}");
+        pid
+    }
+}
+
+impl From<(Ip, IpSource)> for PokemonSeed {
+    fn from(value: (Ip, IpSource)) -> Self {
+        let ip_bytes = u32::from(value.0);
+        log::debug!("Ip: {ip_bytes:#?}");
+        let pokeseed = SEED ^ ip_bytes as u64;
+        log::debug!("seed: {pokeseed:#?}");
+
+        match value.1 {
+            IpSource::Network => PokemonSeed::Ip(pokeseed),
+            IpSource::Lootbox => PokemonSeed::Lootbox(pokeseed),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+//pub struct PokemonSeed(u64);
+pub enum PokemonSeed {
+    Ip(u64),
+    Lootbox(u64),
+}
+
+impl fmt::Display for PokemonSeed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (prefix, seed) = match self {
+            PokemonSeed::Ip(v) => ("N", v),
+            PokemonSeed::Lootbox(v) => ("L", v),
+        };
+        write!(f, "{prefix}{seed:010}")
+    }
+}
+
+impl PokemonSeed {
+    pub fn seed(&self) -> u64 {
+        match self {
+            PokemonSeed::Ip(v) => v,
+            PokemonSeed::Lootbox(v) => v,
+        }
+        .clone()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Pokemon {
-    //id: i64,
+    pub id: PokemonId,
     pub name: String,
     pub sprite_url: Option<String>,
+    pub seed: PokemonSeed,
 }
 
 impl Pokemon {
-    pub async fn new(client: &RustemonClient, id: PokemonId) -> anyhow::Result<Self> {
-        fn get_available_sprite(sprites: PokemonSprites) -> Option<String> {
-            let PokemonSprites {
+    pub async fn new(seed: PokemonSeed) -> anyhow::Result<Self> {
+        fn get_available_sprite(sprites: poke_api::PokemonSprites) -> Option<String> {
+            let poke_api::PokemonSprites {
                 front_default,
                 back_default,
-                ..
             } = sprites;
             front_default.or(back_default)
         }
+        let id = PokemonId::from(seed);
 
-        let pokemon = rustemon::pokemon::pokemon::get_by_id(id.rustemon_id(), client).await?;
+        let pokemon = poke_api::get_by_id(id.rustemon_id()).await?;
 
         Ok(Self {
-            //id,
+            id,
             name: pokemon.name,
             sprite_url: get_available_sprite(pokemon.sprites),
+            seed,
         })
     }
 }
@@ -54,64 +112,39 @@ pub mod draw {
     pub struct PokemonProps {
         //id: PokemonId,
         name: String,
-
+        //seed: String,
         #[props(!optional)]
         sprite_url: Option<String>,
     }
 
+    #[allow(non_snake_case)]
     pub fn Pokemon(cx: Scope<PokemonProps>) -> Element {
-        //println!("draw start");
-        //let pokemon = use_state(&cx, || None);
-        //let id = cx.props.id;
-
-        /*
-        cx.spawn({
-            to_owned![pokemon];
-            async move {
-            pokemon.set(Some(super::Pokemon::new(&RUSTEMON_CLIENT, id).await
-                .map_err(|e| unimplemented!("Could not get pokemon: {e}")).unwrap()));
-        }});
-        */
-
         let sprite = match &cx.props.sprite_url {
             Some(url) => {
                 rsx! {
-                    img {
-                        src: "{url}",
-                        alt: "sprite"
+                    div { class: "w-10 h-10 flex-shring-0 mr-2 sm:mr-3",
+                        img { class: "rounded-full",
+                            src: "{url}",
+                            width: "80",
+                            height: "80",
+                            alt: "{cx.props.name} sprite",
+                        }
                     }
                 }
             }
             None => rsx!("unimplemented"),
         };
 
-        let a = cx.render(rsx! {
-            span {
-                "{cx.props.name}"
+        let span = cx.render(rsx! {
+            div { class: "flex items-center",
+                sprite
+                div { class: "font-medium text-gray-800",
+                    "{cx.props.name}"
+                }
             }
-            sprite
         });
-        //println!("draw end");
-        a
-    }
-}
 
-impl From<Ip> for PokemonId {
-    fn from(value: Ip) -> Self {
-        let ip_bytes = u32::from(value);
-        println!("Ip: {ip_bytes:#?}");
-        let pokeseed = SEED ^ ip_bytes as u64;
-        println!("seed: {pokeseed:#?}");
-        //let rng: SeedableRng<Seed = u64> = SeedableRng::seed_from_u64(pokeseed);
-        let mut chacha = rand_chacha::ChaCha8Rng::seed_from_u64(pokeseed);
-        println!("chacha ok");
-        let index = POKE_WEIGHTED_INDEX.sample(&mut chacha);
-        println!("index: {index:#?}");
-        let r = POKE_DROP_RATES[index].0;
-
-        println!("{r:#?}");
-
-        r
+        span
     }
 }
 

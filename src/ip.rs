@@ -1,10 +1,5 @@
-use anyhow::anyhow;
 use rand::prelude::*;
-use serde::Deserialize;
-use std::net::{IpAddr, Ipv4Addr};
-use std::time::{Duration, SystemTime};
-
-//pub type Ip = String;
+use std::net::Ipv4Addr;
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub struct Ip((u8, u8, u8, u8));
@@ -13,7 +8,6 @@ impl From<Ipv4Addr> for Ip {
     fn from(value: Ipv4Addr) -> Self {
         match value.octets() {
             [o0, o1, o2, o3] => Self((o0, o1, o2, o3)),
-            //_ => panic!("wtf Invalid number of octets in ipv4"),
         }
     }
 }
@@ -37,20 +31,20 @@ pub enum IpSource {
 }
 
 pub fn random_ip() -> Ip {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rngs::SmallRng::from_entropy();
     Ip(rng.gen())
-    //let ip: (u8, u8, u8, u8) = rng.gen();
-    //format!("{}.{}.{}.{}", ip.0, ip.1, ip.2, ip.3)
 }
 
 pub struct IpDetails {
-    pub date: String,
+    pub ip: Ip,
+    pub timestamp: f64,
     pub source: IpSource,
 }
 
 impl IpDetails {
-    pub fn new_network() -> Self {
+    pub fn new_network(ip: Ip) -> Self {
         Self {
+            ip,
             source: IpSource::Network,
             ..Default::default()
         }
@@ -63,40 +57,24 @@ impl IpDetails {
     }
 }
 
+/*
+#[cfg(target_family = "wasm")]
+fn get_unix_timestamp() -> u64 {
+    let now = web_sys::DateTimeValue::now
+}
+*/
+
 impl Default for IpDetails {
     fn default() -> Self {
+        let now = instant::SystemTime::now();
+        let ts = now
+            .duration_since(instant::SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64();
         Self {
-            date: format!("{:?}", SystemTime::now()),
+            ip: Ip((127, 0, 0, 1)),
+            timestamp: ts,
             source: IpSource::Network,
         }
     }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct IfconfigResponse {
-    pub ip_addr: String,
-    pub remote_host: String,
-    //pub user_agent: Option<String>,
-    //pub language: Option<String>,
-    //pub referer: Option<String>,
-    pub method: String,
-    pub encoding: Option<String>,
-    pub mime: String,
-    pub via: String,
-    pub forwarded: String,
-}
-
-const IFCONFIG_IP_URL: &str = "https://ifconfig.me/all.json";
-
-pub async fn fetch_ip() -> anyhow::Result<Ip> {
-    let body = reqwest::get(IFCONFIG_IP_URL).await?;
-    let body_json = body.json::<IfconfigResponse>().await?;
-
-    println!("ip info: {body_json:?}");
-
-    if let IpAddr::V4(ip_v4addr) = body_json.ip_addr.parse()? {
-        return Ok(ip_v4addr.into());
-    }
-
-    Err(anyhow!("unexpected ip addr"))
 }
