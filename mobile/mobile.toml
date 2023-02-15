@@ -1,5 +1,5 @@
 [app]
-name = "poke-ip-go"
+name = "app"
 stylized-name = "Poke Ip Go"
 domain = "ipgo.florkiewicz.me"
 template-pack = "winit"

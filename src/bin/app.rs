@@ -1,11 +1,5 @@
 #[cfg(target_os = "android")]
 mod android {
-    use mobile_entry_point::mobile_entry_point;
-    use winit::{
-        event::{Event, WindowEvent},
-        event_loop::{ControlFlow, EventLoop},
-        window::WindowBuilder,
-    };
 
     pub fn init_logging() {
         android_logger::init_once(
@@ -16,6 +10,8 @@ mod android {
     }
 
     pub fn run_app() {
+        dioxus_mobile::launch(app::app)
+        /*
         let event_loop = EventLoop::new();
 
         let window = WindowBuilder::new()
@@ -39,6 +35,7 @@ mod android {
                 _ => (),
             }
         });
+        */
     }
 }
 
@@ -98,8 +95,18 @@ pub fn main() {
 }
 */
 
-#[cfg_attr(target_os = "android", mobile_entry_point)]
+//#[cfg_attr(target_os = "android", mobile_entry_point::mobile_entry_point)]
+#[cfg(not(target_os = "android"))]
 fn main() {
     init_logging();
     run_app();
 }
+
+#[cfg(target_os = "android")]
+fn main() {}
+/*
+#[cfg(target_os = "android")]
+fn main() {
+    app::start_app();
+}
+*/

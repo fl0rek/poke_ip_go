@@ -6,6 +6,6 @@
 #.cargo/
 /gen
 
-# macOS
-.DS_Store
 /deps/
+/dist
+/http-cacache

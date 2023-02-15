@@ -1,0 +1,16 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "app-mobile"
+path = "gen/bin/desktop.rs"
+
+[dependencies]
+poke_app = { path = ".."}
+mobile-entry-point = "0.1.0"
+dioxus-mobile = "0.3"

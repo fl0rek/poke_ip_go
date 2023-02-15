@@ -15,7 +15,6 @@ pub enum MatchingPokemon {
     Missing,
 }
 
-//pub type IpPokedex = HashMap<ip::Ip, (ip::IpDetails, MatchingPokemon)>;
 pub type IpPokedex = Vec<(ip::IpDetails, MatchingPokemon)>;
 
 fn seed_exists(poke: &IpPokedex, seed: pokemon::PokemonSeed) -> bool {
@@ -31,51 +30,6 @@ fn seed_exists(poke: &IpPokedex, seed: pokemon::PokemonSeed) -> bool {
     }
     return false;
 }
-
-/*
-#[derive(PartialEq, Props)]
-struct LocalIpProps {
-    #[props(!optional)]
-    my_ip: Option<String>,
-}
-
-#[allow(non_snake_case)]
-fn LocalIp(cx: Scope<LocalIpProps>) -> Element {
-    cx.render(match &cx.props.my_ip {
-        Some(ip) => rsx!(input {
-            readonly: true,
-            value: "{ip}",
-        }),
-        None => rsx!(input {
-            disabled: true,
-            value: "Press \"Fetch\" to begin",
-        }),
-    })
-}
-*/
-
-/*
-#[derive(Props, Eq)]
-struct CatchButtonProps {
-    pending_pokemon: DiscoveredIp,
-}
-*/
-
-/*
-#[inline_props]
-fn CatchButton<F>(cx: Scope, pending_pokemon: DiscoveredIp, onclick: F) -> Element
-where
-    F: FnMut(Event<MouseData>) -> (),
-{
-    cx.render(rsx! {
-        button {
-            class: "inline w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200",
-            onclick: onclick,
-            "Catch"
-        }
-    })
-}
-*/
 
 #[derive(PartialEq, Eq)]
 enum DiscoveredIp {
@@ -98,7 +52,7 @@ pub fn app(cx: Scope) -> Element {
             DiscoveredIp::Searching => {
                 let maybe_ip = ip_api::fetch_ip().await.ok();
                 let my_ip = maybe_ip.clone();
-                log::info!("IP: {my_ip:#?}");
+                log::info!("IP: {my_ip:?}");
 
                 let search_result = match maybe_ip
                     .map(|ip| (ip, ip::IpSource::Network))
@@ -144,7 +98,7 @@ pub fn app(cx: Scope) -> Element {
             log::info!("I've been clicked");
             let maybe_ip = ip_api::fetch_ip().await.ok();
             let my_ip = maybe_ip.clone();
-            log::info!("IP: {my_ip:#?}");
+            log::info!("IP: {my_ip:?}");
 
             let maybe_pokemon = match maybe_ip
                 .map(|ip| (ip, ip::IpSource::Network))
@@ -169,7 +123,8 @@ pub fn app(cx: Scope) -> Element {
                 ip_pokedex
                     .write()
                     .push((ip::IpDetails::new_network(my_ip.clone()), maybe_pokemon));
-                pending_pokemon.set(DiscoveredIp::Found)
+                pending_pokemon.set(DiscoveredIp::Found);
+                storage_api::to_local_storage(&*ip_pokedex.read());
             }
         })
     };
@@ -192,6 +147,7 @@ pub fn app(cx: Scope) -> Element {
             ip_pokedex
                 .write()
                 .push((ip::IpDetails::new_lootbox(), pokemon));
+            storage_api::to_local_storage(&*ip_pokedex.read());
         })
     };
 
@@ -218,11 +174,9 @@ pub fn app(cx: Scope) -> Element {
                 div { class: "flex justify-center items-center",
                     div { class: "spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full",
                         role: "status",
-                        /*
-                        span: { class: "visually-hidden",
+                        span { class: "visually-hidden",
                             "Loading..."
                         }
-                        */
                     }
                 }
             }
@@ -311,7 +265,32 @@ pub fn app(cx: Scope) -> Element {
                                                         }
                                                     }
                                                 },
-                                                _ => unimplemented!("XXX0001"),
+                                                MatchingPokemon::FailedToLoad(_fail) => {
+                                                    rsx! { 
+                                                        span {
+                                                            "Failed" 
+                                                        }
+                                                    }
+                                                },
+                                                MatchingPokemon::Missing => {
+                                                    rsx! { 
+                                                        span {
+                                                            "missingNo" 
+                                                        }
+                                                    }
+                                                },
+                                                MatchingPokemon::Loading(_id) => {
+                                                    rsx! {
+                                                        div { class: "flex justify-center items-center",
+                                                            div { class: "spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full",
+                                                                role: "status",
+                                                                span { class: "visually-hidden",
+                                                                    "Loading..."
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         )}
                                     }
@@ -353,4 +332,17 @@ pub fn app(cx: Scope) -> Element {
             */
         }
     ))
+}
+
+#[cfg(target_os = "android")]
+//#[cfg_attr(target_os = "android", mobile_entry_point::mobile_entry_point)]
+#[mobile_entry_point::mobile_entry_point]
+fn main() {
+    android_logger::init_once(
+        android_logger::Config::default()
+        .with_min_level(log::Level::Trace)
+        .with_tag("poke-ip-go"),
+        );
+
+    dioxus_desktop::launch(app)
 }

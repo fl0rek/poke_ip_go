@@ -1,7 +1,8 @@
 use rand::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Ip((u8, u8, u8, u8));
 
 impl From<Ipv4Addr> for Ip {
@@ -24,7 +25,7 @@ impl std::fmt::Display for Ip {
     }
 }
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum IpSource {
     Network,
     Lootbox,
@@ -35,6 +36,7 @@ pub fn random_ip() -> Ip {
     Ip(rng.gen())
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct IpDetails {
     pub ip: Ip,
     pub timestamp: f64,
