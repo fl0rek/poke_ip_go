@@ -4,6 +4,7 @@ use crate::pokedex::MatchingPokemon;
 use crate::pokemon;
 use crate::storage_api;
 use dioxus::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(PartialEq, Eq)]
 enum DiscoveredIp {
@@ -11,6 +12,31 @@ enum DiscoveredIp {
     Pending(pokemon::PokemonSeed),
     Found,
     Error(String),
+}
+
+#[derive(PartialEq, Props)]
+struct TimestampProps {
+    ts: f64,
+}
+
+#[allow(non_snake_case)]
+fn Timestamp(cx: Scope<TimestampProps>) -> Element {
+    let ts = cx.props.ts.floor() as i64;
+    let formatted = match OffsetDateTime::from_unix_timestamp(ts) {
+        Ok(ts) => ts
+            .format(&time::format_description::well_known::Iso8601::DEFAULT)
+            .unwrap_or_else(|_| "Error".to_string()),
+        Err(e) => {
+            log::warn!("Could not parse ts: {e}");
+            "Error".to_string()
+        }
+    };
+
+    cx.render(rsx! {
+        span {
+            "{formatted}"
+        }
+    })
 }
 
 pub fn app(cx: Scope) -> Element {
@@ -25,7 +51,6 @@ pub fn app(cx: Scope) -> Element {
     let pending_pokemon_read = pending_pokemon.clone();
 
     cx.spawn(async move {
-        //to_owned![pending_pokemon];
         match *pending_pokemon_read.current() {
             DiscoveredIp::Searching => {
                 let maybe_ip = ip_api::fetch_ip().await.ok();
@@ -42,28 +67,11 @@ pub fn app(cx: Scope) -> Element {
                         } else {
                             DiscoveredIp::Pending(seed)
                         }
-                        /*
-                        match pokemon::Pokemon::new(seed).await {
-                        Ok(p) => MatchingPokemon::Pokemon(p),
-                        Err(e) => {
-                        println!("FailedToLoad {seed:?}: {e}");
-                        MatchingPokemon::FailedToLoad(seed.into())
-                        }
-                        }
-                        */
                     }
                     None => DiscoveredIp::Error("Could not get IP".to_string()),
                 };
 
                 pending_pokemon_read.set(search_result);
-
-                /*
-                if let Some(ref my_ip) = my_ip {
-                ip_pokedex
-                .write()
-                .push((ip::IpDetails::new_network(my_ip.clone()), maybe_pokemon));
-                }
-                */
             }
             _ => (),
         }
@@ -89,7 +97,7 @@ pub fn app(cx: Scope) -> Element {
                     match pokemon::Pokemon::new(seed).await {
                         Ok(p) => MatchingPokemon::Pokemon(p),
                         Err(e) => {
-                            println!("FailedToLoad {seed:?}: {e}");
+                            log::error!("FailedToLoad {seed:?}: {e}");
                             MatchingPokemon::FailedToLoad(seed.into())
                         }
                     }
@@ -119,7 +127,7 @@ pub fn app(cx: Scope) -> Element {
             let pokemon = match pokemon::Pokemon::new(seed).await {
                 Ok(p) => MatchingPokemon::Pokemon(p),
                 Err(e) => {
-                    println!("FailedToLoad {seed:?}: {e}");
+                    log::error!("FailedToLoad {seed:?}: {e}");
                     MatchingPokemon::FailedToLoad(seed.into())
                 }
             };
@@ -207,18 +215,6 @@ pub fn app(cx: Scope) -> Element {
                         div { class: "my-2 bg-gray-600 h-[1px]"}
                     }
                     catch_button,
-                    /*
-                    button {
-                        class: "block w-full",
-                        onclick: update_random,
-                        div { class: "p-2.5 mt-3 flex items-center rounded-md px-4 duration-200 cursor-pointer hover:bg-indigo-600 text-white",
-                            i { class: "bi bi-question-square px-2 py-1 rounded-md bg-slate-300 text-gray-900" },
-                            span { class: "text-[15px], ml-4 text-gray-900 font-bold",
-                                "Catch"
-                            }
-                        }
-                    }
-                    */
                     button {
                         class: "block w-full",
                         onclick: update_random,
@@ -244,21 +240,6 @@ pub fn app(cx: Scope) -> Element {
             div { class: "flex-1 flex overflow-hidden",
                 div { class: "flex-1 overflow-y-scroll",
                     section { class: "antialiased bg-gray-100 text-gray-600 px-4",
-                    /*
-                        div { class: "m-2 w-full text-center mx-auto",
-                            catch_button,
-                            button {
-                                class: "inline w-full md:w-auto px-6 py-3 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200",
-                                onclick: update_random,
-                                "Lootbox"
-                            }
-                            button {
-                                class: "inline w-full md:w-auto p-6 font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded transition duration-200 disabled",
-                                onclick: toggle_qr,
-                                "QR"
-                            }
-                        },
-                        */
                         div { class: "",
                             div { class: "bg-white shadow-lg rounded-sm border border-gray-200",
                                 header { class: "px-5 py-4 border-b border-gray-100",
@@ -317,16 +298,25 @@ pub fn app(cx: Scope) -> Element {
                                                                     }
                                                                     td { class: "p-2 whitespace-nowrap text-slate-500",
                                                                         div { class: "text-left",
-                                                                            "{ip_details.timestamp}"
+                                                                            //"{ip_details.timestamp}"
+                                                                            Timestamp {
+                                                                                ts: ip_details.timestamp,
+                                                                            }
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                         },
-                                                        MatchingPokemon::FailedToLoad(_fail) => {
+                                                        MatchingPokemon::FailedToLoad(fail) => {
+                                                            log::warn!("Failed to load pokemon: {fail:?}");
                                                             rsx! {
-                                                                span {
-                                                                    "Failed" 
+                                                                tr {
+                                                                    td { class: "p-2 whitespace-nowrap",
+                                                                        "Failed"
+                                                                    }
+                                                                    td {
+                                                                        colspan: 3,
+                                                                    }
                                                                 }
                                                             }
                                                         },

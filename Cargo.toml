@@ -16,11 +16,12 @@ lazy_static = "1.4"
 rand = {version = "0.8", features = ["small_rng", "alloc", "getrandom"], default-features = false}
 serde = "1"
 serde_json = "1"
+log = "0.4.17"
+time = { version = "0.3.20", features = ["formatting"]}
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 dioxus-desktop = "0.3.0"
 instant = {version = "0.1"}
-log = "0.4.17"
 rustemon = "3.1"
 reqwest = { version = "0.11", features = ["json"]}
 
@@ -34,6 +35,9 @@ console_error_panic_hook = "0.1.7"
 dioxus-web = "0.3.0"
 instant = { version = "0.1", features = ["wasm-bindgen"]}
 wasm-logger = "0.2.0"
+getrandom = { version = "0.2", features = ["js"]}
+wasm_request = "0.1"
+serde-wasm-bindgen = "0.4"
 
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
 pretty_env_logger = "0.4"

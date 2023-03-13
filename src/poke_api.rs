@@ -12,7 +12,6 @@ pub struct Pokemon {
     pub id: i64,
     pub name: String,
     pub sprites: PokemonSprites,
-    pub names: Vec<PokemonNames>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -43,7 +42,6 @@ impl From<pokemon::Pokemon> for Pokemon {
             id: value.id,
             name: value.name,
             sprites: value.sprites.into(),
-            names: vec![],
         }
     }
 }
@@ -66,6 +64,8 @@ pub async fn get_by_id(id: i64) -> anyhow::Result<Pokemon> {
 
     let op = get_options::<()>(&poke_url, Method::Get, None, None);
     let body = request(op).await?;
+
+    log::info!("Response: {body:?}");
 
     match from_value(body) {
         Ok(poke) => {
