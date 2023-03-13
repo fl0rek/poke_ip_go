@@ -21,6 +21,8 @@ const IFCONFIG_IP_URL: &str = "https://ifconfig.me/all.json";
 
 #[cfg(not(target_family = "wasm"))]
 pub async fn fetch_ip() -> anyhow::Result<Ip> {
+    //return Ok(Ip::from((127, 0, 0, 1)));
+
     let body = reqwest::get(IFCONFIG_IP_URL).await?;
     let body_json = body.json::<IfconfigResponse>().await?;
 

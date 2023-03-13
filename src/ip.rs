@@ -5,6 +5,12 @@ use std::net::Ipv4Addr;
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Ip((u8, u8, u8, u8));
 
+impl From<(u8, u8, u8, u8)> for Ip {
+    fn from(tuple: (u8, u8, u8, u8)) -> Self {
+        Self(tuple)
+    }
+}
+
 impl From<Ipv4Addr> for Ip {
     fn from(value: Ipv4Addr) -> Self {
         match value.octets() {
@@ -58,13 +64,6 @@ impl IpDetails {
         }
     }
 }
-
-/*
-#[cfg(target_family = "wasm")]
-fn get_unix_timestamp() -> u64 {
-    let now = web_sys::DateTimeValue::now
-}
-*/
 
 impl Default for IpDetails {
     fn default() -> Self {
