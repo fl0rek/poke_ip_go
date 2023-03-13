@@ -8,7 +8,7 @@ We're using helper tools to run our app on different platforms, since it makes o
 
 ### Desktop
 
-For Windows/Linux (and probably OSX), once can just use `cargo` or `rust-mobile/xbuild` tool.
+For Windows/Linux (and probably OSX), once can just use `cargo` or [`rust-mobile/xbuild`](https://github.com/rust-mobile/xbuild) tool.
 
 ```sh 
  $ cargo run
@@ -18,6 +18,11 @@ For Windows/Linux (and probably OSX), once can just use `cargo` or `rust-mobile/
 ```
  
 ### Mobile
+Main reason for using `xbuild` is so that we don't have to deal with all the project setup and let tool handle that for us. To run, select your device from `x devices`.
+
+```sh 
+ $ x run --device $your_android_device
+````
 
 ### Web
 
